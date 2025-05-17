@@ -1,0 +1,11 @@
+{
+  "DeviceName": "xy-Autoenrollment",
+  "DomainName": "xy.local",
+  "DomainUser": "xy.local\\admin",
+  "DomainPassword": "1234asdf",
+  "OU": "OU=Computer,OU=xy,DC=xy,DC=local",
+  "teamviewer": {
+	"assignmentId": "xy"
+  },
+ "OrganisationId": "7ad9013a-5c04-47bd-8feb-d618c50ebce9"
+}
