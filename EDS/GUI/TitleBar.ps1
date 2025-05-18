@@ -11,18 +11,26 @@ function Add-TitleBar {
     $logo.Size = New-Object System.Drawing.Size(24,24)
     $logo.Location = New-Object System.Drawing.Point(10, 8)
     $logo.SizeMode = "StretchImage"
-    $logo.Image = [System.Drawing.Image]::FromFile(".\logo.png")
-    $titleBar.Controls.Add($logo)
+
+    # Try to load the logo, skip if not found
+    $logoPath = Join-Path $PSScriptRoot "logo.png"
+    if (Test-Path $logoPath) {
+        try {
+            $logo.Image = [System.Drawing.Image]::FromFile($logoPath)
+            $titleBar.Controls.Add($logo)
+        } catch {
+            Write-Warning "Could not load logo image: $_"
+        }
+    }
 
     # PowerShell Logo text
     $logoText = New-Object System.Windows.Forms.Label
-    $logoText.Text = "$script:EDSFolderName Imaging-Toolbox"
+    $logoText.Text = "CWI Imaging-Toolbox"
     $logoText.ForeColor = [System.Drawing.Color]::LightBlue
     $logoText.Font = New-Object System.Drawing.Font("Consolas", 12)
     $logoText.Location = New-Object System.Drawing.Point(44,10)
     $logoText.AutoSize = $true
     $titleBar.Controls.Add($logoText)
-
     # Window Control Buttons
     Add-WindowControls $titleBar
 
