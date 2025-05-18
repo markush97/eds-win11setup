@@ -28,8 +28,6 @@ $loadingForm.Dispose()
 
 Write-Host "Init done, starting actual installer..."
 
-
-# Initialize and show main form
 # Initialize and show the form
 $mainForm = Initialize-MainForm
 $mainForm.ShowDialog()

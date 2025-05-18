@@ -134,6 +134,8 @@ function Start-Installation {
     # Close the GUI form since setup is now visible
     $script:form.Close()
 
+    Write-Host "Copying custom data inside the new windows-instance"
+    Copy-CustomData -TargetPath "C:"
     Write-Host "Starting installation process for device: $($script:deviceTextBox.Text)"
     Start-Process -FilePath "X:\setup.exe" -ArgumentList "/unattend:X:\${global:$EDSFolderName}\TEMP\unattended.xml" -NoNewWindow -WindowStyle Normal
 }
