@@ -1,0 +1,85 @@
+# Custom Boot.wim Guide
+
+## Overview
+
+While it's not strictly necessary to build a custom boot.wim a custom boot.wim becomes necessary in the following scenarios:
+
+- Special drivers (e.g., for WiFi setup or within certain VMs)
+- Requirements beyond unattended.xml capabilities (e.g., loading autounattended.xml from a web server)
+- Custom Windows Installer GUI
+
+Since the boot.wim can be reused for different Windows11-Installer (and maybe even for Windows12), it makes sense to modify one boot.wim to your likings once and keep it.
+
+This guide will aim to provide minimal instructions for such modifications.
+
+## Important Notes
+
+In most guides referenced below, the boot.wim file is already mounted (e.g., using the dism.exe tool). The term "commit" is often used in this context - only through committing are changes written to the .wim file.
+
+**Critical**: The standard Windows 11 ISO contains two images in the boot.wim:
+
+1. First Image (WinPE): Really slim WinPE Environment with smaller footprint but more flexible
+2. Second Image: Bigger image containing the classic windows-11 Setup-GUI and other stuff, which we will use in our case, since we only want to inject some configuration-files and let the normal windows11-installer handle the rest.
+
+## Loading Drivers or Modules
+
+While drivers and packages can be loaded manually using dism.exe commands ("Dism /Add-Package"), this process is tedious and error-prone. We recommend using [DISMTools](https://github.com/CodingWonders/DISMTools).
+
+Process:
+
+1. Mount the boot.wim image
+2. Add packages using the tool's interface
+3. Commit changes frequently to prevent corruption
+
+## PowerShell Requirements
+
+For PowerShell functionality in the installer, the following packages must be loaded:
+
+```
+C:\Program Files (x86)\Windows Kits\10\Assessment and Deployment Kit\Windows Preinstallation Environment\amd64\WinPE_OCs\WinPE-WMI.cab
+C:\Program Files (x86)\Windows Kits\10\Assessment and Deployment Kit\Windows Preinstallation Environment\amd64\WinPE_OCs\WinPe-NetFx.cab
+C:\Program Files (x86)\Windows Kits\10\Assessment and Deployment Kit\Windows Preinstallation Environment\amd64\WinPE_OCs\WinPe-Scripting.cab
+C:\Program Files (x86)\Windows Kits\10\Assessment and Deployment Kit\Windows Preinstallation Environment\amd64\WinPE_OCs\WinPe-Powershell.cab
+```
+
+## Windows Installer Modification
+
+While not considered best practice, we group all EDS-custom information in a "EDS" folder at the boot.wim root for better traceability and reproducibility.
+
+### Entry Points
+
+#### Standard WinPE (startnet.cmd)
+
+> Better use the method for (winpeshl.ini) below for minimal modifications
+
+The entry point in a boot.wim for standard WinPE is `<boot.wim-root>\Windows\System32\startnet.cmd`. This script runs first at startup. The boot.wim file is always mounted as drive X: in the installer.
+
+Default content with CWI modifications:
+
+```cmd
+echo Initializing custom CWI-Installer
+X:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -ExecutionPolicy Bypass -NoExit -File X:\Entrypoint.ps1
+```
+
+#### Windows 11 ISO (winpeshl.ini)
+
+For standard Windows 11 ISOs, the entry point is winpeshl.exe, which directly starts setup. To run custom scripts, create `Windows/System32/winpeshl.ini`:
+
+```ini
+[LaunchApps]
+X:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -ExecutionPolicy Bypass -NoExit -File X:\Entrypoint.ps1
+```
+
+For detailed winpeshl.ini syntax, refer to the [Microsoft Documentation](https://learn.microsoft.com/windows-hardware/manufacture/desktop/winpeshlini-reference-launching-an-app-when-winpe-starts?view=windows-11).
+
+The start script is intentionally minimal to maintain maximum flexibility.
+
+#### Entrypoint.ps1
+
+Boths modifications above do nothing but executing Entrypoint.ps1. This file has to reside inside the root-folder of the boot.wim. Again it makes modifications easier, to keep this file as simple as possible.
+
+For this reason the [Entrypoint.ps1](/bootwim-modifications/Entrypoint.ps1) in this repository only has the task to search every attached drive for a folder called "EDS" (or whatever you define it to be named like) that has an File named "eds.cfg" inside it. This file can be completly empty aswell. Its main reason is to tell the Installer which Medium to use in case there are multiple USB-Sticks attached.
+
+Once that folder has been found, the script copies all of its content into the Root-Directory of the current installer (which is the mounted boot.wim). This provides the advantage of only having to modify the files inside the ISO/Installationmedium without using more complicated tools like DISM.
+
+At last the entrypoint.ps1 starts a "Start.ps1" located at the root of the found "EDS"-Folder. Every complicated logic should be handled inside this script.
