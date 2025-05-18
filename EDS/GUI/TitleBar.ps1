@@ -16,7 +16,7 @@ function Add-TitleBar {
 
     # PowerShell Logo text
     $logoText = New-Object System.Windows.Forms.Label
-    $logoText.Text = "EDS Imaging-Toolbox"
+    $logoText.Text = "${global:EDSTitle} Imaging-Toolbox"
     $logoText.ForeColor = [System.Drawing.Color]::LightBlue
     $logoText.Font = New-Object System.Drawing.Font("Consolas", 12)
     $logoText.Location = New-Object System.Drawing.Point(44,10)

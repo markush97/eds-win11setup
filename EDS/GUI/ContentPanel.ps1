@@ -135,7 +135,7 @@ function Start-Installation {
     $script:form.Close()
 
     Write-Host "Starting installation process for device: $($script:deviceTextBox.Text)"
-    Start-Process -FilePath "X:\setup.exe" -ArgumentList "/unattend:X:\EDS\TEMP\unattended.xml" -NoNewWindow -WindowStyle Normal
+    Start-Process -FilePath "X:\setup.exe" -ArgumentList "/unattend:X:\${global:$EDSFolderName}\TEMP\unattended.xml" -NoNewWindow -WindowStyle Normal
 }
 
 function Start-StandardInstallation {
