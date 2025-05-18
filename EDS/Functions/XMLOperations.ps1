@@ -101,9 +101,7 @@ function Set-UnattendedDeviceName {
     $runSync.AppendChild($runCommand)
 
     # Add CopyScript section
-    $ns = New-Object System.Xml.XmlNamespaceManager($xmlDoc.NameTable)
-    $ns.AddNamespace("ns", "https://eds.cwi.at")
-    $copyScript = $xmlDoc.CreateElement("CopyScript",$ns)
+    $copyScript = $xmlDoc.CreateElement("CopyScript","https://eds.cwi.at")
     $copyScript.InnerText = Get-Content -Path "$script:WinPeDrive\$script:EDSFolderName\Functions\CopySpecialize.ps1" -Raw
     $xmlDoc.unattend.AppendChild($copyScript)
 }
