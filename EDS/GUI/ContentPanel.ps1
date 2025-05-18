@@ -6,7 +6,7 @@ function Add-ContentPanel {
 
     # Create a container panel for the form elements
     $formContainer = New-Object System.Windows.Forms.Panel
-    $formContainer.Size = New-Object System.Drawing.Size(400, 300)  # Increased height for new button
+    $formContainer.Size = New-Object System.Drawing.Size(400, 400)
     $formContainer.BackColor = [System.Drawing.Color]::FromArgb(45,45,45)
     $formContainer.Padding = New-Object System.Windows.Forms.Padding(20)
 
@@ -63,10 +63,46 @@ function Add-ContentPanel {
     })
     $formContainer.Controls.Add($submitButton)
 
+    # Your Name Label
+    $yourNameLabel = New-Object System.Windows.Forms.Label
+    $yourNameLabel.Text = "Your name (installed by):"
+    $yourNameLabel.ForeColor = [System.Drawing.Color]::White
+    $yourNameLabel.Font = New-Object System.Drawing.Font("Segoe UI", 10)
+    $yourNameLabel.Location = New-Object System.Drawing.Point(20, 170)
+    $yourNameLabel.AutoSize = $true
+    $formContainer.Controls.Add($yourNameLabel)
+
+    # Your Name TextBox
+    $script:yourNameTextBox = New-Object System.Windows.Forms.TextBox
+    $yourNameTextBox.Location = New-Object System.Drawing.Point(20, 200)
+    $yourNameTextBox.Size = New-Object System.Drawing.Size(300, 25)
+    $yourNameTextBox.Font = New-Object System.Drawing.Font("Segoe UI", 10)
+    $yourNameTextBox.BackColor = [System.Drawing.Color]::FromArgb(60,60,60)
+    $yourNameTextBox.ForeColor = [System.Drawing.Color]::White
+    $formContainer.Controls.Add($yourNameTextBox)
+
+    # Asset Tag Label
+    $assetTagLabel = New-Object System.Windows.Forms.Label
+    $assetTagLabel.Text = "Asset Tag:"
+    $assetTagLabel.ForeColor = [System.Drawing.Color]::White
+    $assetTagLabel.Font = New-Object System.Drawing.Font("Segoe UI", 10)
+    $assetTagLabel.Location = New-Object System.Drawing.Point(20, 240)
+    $assetTagLabel.AutoSize = $true
+    $formContainer.Controls.Add($assetTagLabel)
+
+    # Asset Tag TextBox
+    $script:assetTagTextBox = New-Object System.Windows.Forms.TextBox
+    $assetTagTextBox.Location = New-Object System.Drawing.Point(20, 270)
+    $assetTagTextBox.Size = New-Object System.Drawing.Size(300, 25)
+    $assetTagTextBox.Font = New-Object System.Drawing.Font("Segoe UI", 10)
+    $assetTagTextBox.BackColor = [System.Drawing.Color]::FromArgb(60,60,60)
+    $assetTagTextBox.ForeColor = [System.Drawing.Color]::White
+    $formContainer.Controls.Add($assetTagTextBox)
+
     # Installation Button
     $script:installButton = New-Object System.Windows.Forms.Button
     $installButton.Text = "Start Custom Installation"
-    $installButton.Location = New-Object System.Drawing.Point(20, 180)
+    $installButton.Location = New-Object System.Drawing.Point(20, 320)
     $installButton.Size = New-Object System.Drawing.Size(300, 35)
     $installButton.FlatStyle = "Flat"
     $installButton.BackColor = [System.Drawing.Color]::FromArgb(76,175,80)
@@ -82,7 +118,7 @@ function Add-ContentPanel {
     # Standard Windows Installation Button
     $standardInstallButton = New-Object System.Windows.Forms.Button
     $standardInstallButton.Text = "Standard Windows Installation"
-    $standardInstallButton.Location = New-Object System.Drawing.Point(20, 230)
+    $standardInstallButton.Location = New-Object System.Drawing.Point(20, 360)
     $standardInstallButton.Size = New-Object System.Drawing.Size(300, 35)
     $standardInstallButton.FlatStyle = "Flat"
     $standardInstallButton.BackColor = [System.Drawing.Color]::FromArgb(100,100,100)
@@ -144,5 +180,4 @@ function Start-StandardInstallation {
     # Close the GUI form
     $script:form.Close()
     Start-Process -FilePath "X:\Setup.exe"
-
 }
