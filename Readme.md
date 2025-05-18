@@ -2,6 +2,30 @@
 
 The install.wim is the image of the to-be-created Windows installation. This will basically be copied into the new Windows-Root (C:). So if you want any tools, drivers or files to exist in the newly created installation, place them there.
 
+## Downloading the Latest CU/SU (Cumulative Update/Security Update)
+
+Find the latest KB (Knowledge Base) update using this link: https://catalog.update.microsoft.com/Search.aspx?q=Kumulatives%20Update%20f%C3%BCr%20Windows%2011
+
+At the time of writing, this is "2025-05 Cumulative Update for Windows 11 Version 24H2 for x64-based systems (KB5058411)".
+
+The file should be approximately 3-5GB in size.
+
+### Installing in the Installation Media
+
+Mount the install.wim and apply the update using dism.exe. Alternatively, a helper tool like DISMTools can be used.
+
+```cmd
+dism /Image:C:<install.wim-mountdir> /Add-Package /PackagePath:<path-to-CU.msu>
+```
+
+Example:
+
+```bash
+dism /Image:"C:\Temp\Imaging\FullAutomation\mount" /Add-Package /PackagePath:"C:\Users\mhinkel\Downloads\windows11.0-kb5058411-x64_fc93a482441b42bcdbb035f915d4be2047d63de5.msu"
+```
+
+**IMPORTANT**: This process can take several minutes.
+
 # Boot.wim
 
 The boot.wim is the "OS" the installer uses. This is being booted when booting from a windows-usbstick or winpe environment (e.g. PXE).
@@ -42,10 +66,12 @@ Process:
 For PowerShell functionality in the installer, the following packages must be loaded:
 
 ```
+
 C:\Program Files (x86)\Windows Kits\10\Assessment and Deployment Kit\Windows Preinstallation Environment\amd64\WinPE_OCs\WinPE-WMI.cab
 C:\Program Files (x86)\Windows Kits\10\Assessment and Deployment Kit\Windows Preinstallation Environment\amd64\WinPE_OCs\WinPe-NetFx.cab
 C:\Program Files (x86)\Windows Kits\10\Assessment and Deployment Kit\Windows Preinstallation Environment\amd64\WinPE_OCs\WinPe-Scripting.cab
 C:\Program Files (x86)\Windows Kits\10\Assessment and Deployment Kit\Windows Preinstallation Environment\amd64\WinPE_OCs\WinPe-Powershell.cab
+
 ```
 
 ## Windows Installer Modification
