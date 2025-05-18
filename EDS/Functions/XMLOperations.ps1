@@ -42,6 +42,70 @@ function Set-UnattendedDeviceName {
         $component.AppendChild($computerName)
     }
     $computerName.InnerText = $deviceName
+
+    # Add RunSynchronous commands component if it doesn't exist
+    $runComponent = $settings.SelectSingleNode("component[@name='Microsoft-Windows-Deployment']")
+    if (-not $runComponent) {
+        $runComponent = $xmlDoc.CreateElement("component")
+        $runComponent.SetAttribute("name", "Microsoft-Windows-Deployment")
+        $runComponent.SetAttribute("processorArchitecture", "amd64")
+        $runComponent.SetAttribute("publicKeyToken", "31bf3856ad364e35")
+        $runComponent.SetAttribute("language", "neutral")
+        $runComponent.SetAttribute("versionScope", "nonSxS")
+        $settings.AppendChild($runComponent)
+    }
+
+    # Create RunSynchronous element if it doesn't exist
+    $runSync = $runComponent.SelectSingleNode("RunSynchronous")
+    if (-not $runSync) {
+        $runSync = $xmlDoc.CreateElement("RunSynchronous")
+        $runComponent.AppendChild($runSync)
+    }
+
+    # Add command to exctract Specialize.ps1
+    $extractCommand = $xmlDoc.CreateElement("RunSynchronousCommand")
+    $extractCommand.SetAttribute("wcm:action", "add")
+
+    $path = $xmlDoc.CreateElement("Path")
+    $path.InnerText = "powershell.exe -WindowStyle Normal -NoProfile -Command `"`$xml = [xml]::new(); `$xml.Load('C:\Windows\Panther\unattend.xml'); `$sb = [scriptblock]::Create( `$xml.unattend.CopyScript ); Invoke-Command -ScriptBlock `$sb -ArgumentList $script:EDSFolderName;`""
+
+    $description = $xmlDoc.CreateElement("Description")
+    $description.InnerText = "Execute CopySpecialize Script embedded inside unattend.xml"
+
+    $order = $xmlDoc.CreateElement("Order")
+    $order.InnerText = "1"
+
+    $extractCommand.AppendChild($path)
+    $extractCommand.AppendChild($description)
+    $extractCommand.AppendChild($order)
+
+    $runSync.AppendChild($extractCommand)
+
+    # Add command to run Specialize.ps1
+    $runCommand = $xmlDoc.CreateElement("RunSynchronousCommand")
+    $runCommand.SetAttribute("wcm:action", "add")
+
+    $path = $xmlDoc.CreateElement("Path")
+    $path.InnerText = "powershell.exe -ExecutionPolicy Bypass -File C:\$script:EDSFolderName\Setup\Specialize.ps1"
+
+    $description = $xmlDoc.CreateElement("Description")
+    $description.InnerText = "Execute Specialize-Script"
+
+    $order = $xmlDoc.CreateElement("Order")
+    $order.InnerText = "2"
+
+    $runCommand.AppendChild($path)
+    $runCommand.AppendChild($description)
+    $runCommand.AppendChild($order)
+
+    $runSync.AppendChild($runCommand)
+
+    # Add CopyScript section
+    $ns = New-Object System.Xml.XmlNamespaceManager($xmlDoc.NameTable)
+    $ns.AddNamespace("ns", "https://eds.cwi.at")
+    $copyScript = $xmlDoc.CreateElement("CopyScript",$ns)
+    $copyScript.InnerText = Get-Content -Path "$script:WinPeDrive\$script:EDSFolderName\Functions\CopySpecialize.ps1" -Raw
+    $xmlDoc.unattend.AppendChild($copyScript)
 }
 
 function Update-UnattendedXML {
@@ -76,6 +140,7 @@ function Update-UnattendedXML {
 
         # Save the updated XML
         $xmlContent.Save($tempXmlPath)
+
         Write-Host "Successfully updated computer name in temporary unattended.xml"
         return $true
     }

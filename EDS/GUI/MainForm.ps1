@@ -6,6 +6,7 @@
 . $PSScriptRoot\..\Functions\EnvironmentHelper.ps1
 
 function Initialize-MainForm {
+
     $script:form = New-Object System.Windows.Forms.Form
     $form.Text = "ImagingToolbox"
     $form.Size = New-Object System.Drawing.Size(800,600)

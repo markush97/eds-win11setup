@@ -1,6 +1,18 @@
 # Hacky workaround till a real config-system is in place
-$script:EDSFolderName = "EDS"
-$script:EDSTitle = "EDS"
+param (
+    [switch]$DryRun = $false,
+    [string]$WinPeDrive = "X:",
+    [string]$EDSFolderName = "EDS"
+)
+
+$script:EDSFolderName = $EDSFolderName
+$script:EDSTitle = $EDSFolderName
+$script:DryRun = $DryRun
+$script:WinPeDrive
+
+if ($DryRun -eq $true) {
+    Write-Host "Starting installer in DryRun Mode"
+}
 Write-Host EDS-Folder is $script:EDSFolderName
 
 Add-Type -AssemblyName System.Windows.Forms
@@ -18,9 +30,13 @@ Show-LoadingScreen -message "Initializing Windows PE..." -parentForm $loadingFor
 $loadingForm.Show()
 $loadingForm.Update()
 
-# Initialize WinPE
-Start-Process "wpeinit.exe" -Wait
-Start-Sleep -Seconds 2
+if ($DryRun -ne $true) {
+    # Initialize WinPE
+    Start-Process "wpeinit.exe" -Wait
+    Start-Sleep -Seconds 2
+} else {
+    Write-Host "Skipping WPEInit because of Dry-Run"
+}
 
 # Close loading form
 $loadingForm.Close()
@@ -29,5 +45,5 @@ $loadingForm.Dispose()
 Write-Host "Init done, starting actual installer..."
 
 # Initialize and show the form
-$mainForm = Initialize-MainForm
+$mainForm = Initialize-MainForm -DryRun $DryRun
 $mainForm.ShowDialog()

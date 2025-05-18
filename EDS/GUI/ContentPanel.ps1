@@ -170,14 +170,16 @@ function Start-Installation {
     # Close the GUI form since setup is now visible
     $script:form.Close()
 
-    Write-Host "Copying custom data inside the new windows-instance"
-    Copy-CustomData -TargetPath "C:"
     Write-Host "Starting installation process for device: $($script:deviceTextBox.Text)"
-    Start-Process -FilePath "X:\setup.exe" -ArgumentList "/unattend:X:\$script:EDSFolderName\TEMP\unattended.xml" -NoNewWindow
+    if ($script:DryRun -ne $true) {
+        Start-Process -FilePath "$script:WinPeDrive\setup.exe" -ArgumentList "/unattend:$script:WinPeDrive\$script:EDSFolderName\TEMP\unattended.xml" -NoNewWindow
+    } else {
+        Write-Host "Skipping actual setup because of Dry-Run"
+    }
 }
 
 function Start-StandardInstallation {
     # Close the GUI form
     $script:form.Close()
-    Start-Process -FilePath "X:\Setup.exe"
+    Start-Process -FilePath "$script:WinPeDrive\Setup.exe"
 }
