@@ -16,7 +16,7 @@ function Set-UnattendedDeviceName {
     }
 
     # Create settings pass if it doesn't exist
-    $settings = $xmlDoc.SelectSingleNode("//settings[@pass='specialize']")
+    $settings = $xmlDoc.SelectSingleNode("settings[@pass='specialize']")
     if (-not $settings) {
         $settings = $xmlDoc.CreateElement("settings")
         $settings.SetAttribute("pass", "specialize")
