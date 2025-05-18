@@ -1,7 +1,7 @@
 # Hacky workaround till a real config-system is in place
-$global:EDSFolderName = "EDS"
-$global:EDSTitle = "EDS"
-Write-Host "EDS-Folder is ${global:$EDSFolderName}"
+$script:EDSFolderName = "EDS"
+$script:EDSTitle = "EDS"
+Write-Host EDS-Folder is $script:EDSFolderName
 
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing

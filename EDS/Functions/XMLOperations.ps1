@@ -62,7 +62,7 @@ function Update-UnattendedXML {
             New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
         }
 
-        $sourceXmlPath = Join-Path $installDrive "${global:$EDSFolderName}\unattended.xml"
+        $sourceXmlPath = Join-Path $installDrive "$script:EDSFolderName\unattended.xml"
         $tempXmlPath = Join-Path $tempDir "unattended.xml"
 
         if (Test-Path $sourceXmlPath) {

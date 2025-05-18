@@ -1,4 +1,10 @@
-# Custom Boot.wim Guide
+# Install.wim
+
+The install.wim is the image of the to-be-created Windows installation. This will basically be copied into the new Windows-Root (C:). So if you want any tools, drivers or files to exist in the newly created installation, place them there.
+
+# Boot.wim
+
+The boot.wim is the "OS" the installer uses. This is being booted when booting from a windows-usbstick or winpe environment (e.g. PXE).
 
 ## Overview
 
