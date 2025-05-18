@@ -18,10 +18,8 @@ Write-Host EDS-Folder is $script:EDSFolderName
 Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 
-# Import Forms
+# Import Loading Forms
 . $PSScriptRoot\GUI\LoadingScreen.ps1
-. $PSScriptRoot\GUI\WarningPopup.ps1
-. $PSScriptRoot\GUI\MainForm.ps1
 
 # Show loading screen
 Write-Host "Starting WinPe Initialization Process..."
@@ -42,8 +40,16 @@ if ($DryRun -ne $true) {
 $loadingForm.Close()
 $loadingForm.Dispose()
 
-Write-Host "Init done, starting actual installer..."
+# Import Other Forms
+. $PSScriptRoot\GUI\WarningPopup.ps1
+. $PSScriptRoot\GUI\MainForm.ps1
+. $PSScriptRoot\Functions\XMLOperations.ps1
 
+Write-Host "Creating default unattend.xml Template..."
+Set-DefaultUnattendedXML
+
+Write-Host "Init done, starting actual installer..."
 # Initialize and show the form
 $mainForm = Initialize-MainForm -DryRun $DryRun
+Write-Host "Showing form..."
 $mainForm.ShowDialog()

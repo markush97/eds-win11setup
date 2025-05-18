@@ -144,13 +144,24 @@ function Add-ContentPanel {
 
 function Set-DeviceName {
     param($deviceName)
+
     if ([string]::IsNullOrWhiteSpace($deviceName)) {
         $script:installButton.Enabled = $false
         return
     }
 
-    $success = Update-UnattendedXML -deviceName $deviceName
+    $success = Set-UnattendedDeviceName -xmlDoc $script:unattendXml -deviceName $deviceName
     $script:installButton.Enabled = $success
+}
+
+function Set-UserInput {
+    # Collect user inputs
+    $userInput = @{
+        AssetTag = $script:assetTagTextBox.Text
+        InstalledBy = $script:yourNameTextBox.Text
+    }
+
+    Set-UnattendedUserInput -xmlDoc $script:unattendXml -UserInput $userInput
 }
 
 function Start-Installation {
@@ -163,7 +174,7 @@ function Start-Installation {
         )
         return
     }
-
+    Set-UserInput
     # Show warning after loading screen
     Show-WarningPopup -message "Warning: This will erase all data on the target device. The installation will begin automatically in 30 seconds. Press any key to cancel." -timeout 30
 

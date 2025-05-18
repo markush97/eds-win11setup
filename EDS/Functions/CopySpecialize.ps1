@@ -11,10 +11,10 @@ try {
     foreach ($drive in $drives) {
         $path = Join-Path $drive.Root "$EDSFolderName\eds.cfg"
         if (Test-Path $path) {
-            Write-Host "Found installation-drive on drive ${drive.Root}"
-            New-Item -Path (Join-Path $targetPath $EDSFolderName) -ItemType Directory -Force | Out-Null
+            Write-Host "Found installation-drive on drive $($drive.Root)"
+            New-Item -Path (Join-Path "C:" $EDSFolderName) -ItemType Directory -Force | Out-Null
              # Copy Custom folder to system drive
-            Copy-Item -Path (Join-Path $installDrive "$EDSFolderName\*") -Destination (Join-Path $targetPath $EDSFolderName) -Recurse -Force
+            Copy-Item -Path (Join-Path $drive "$EDSFolderName\*") -Destination (Join-Path "C:" $EDSFolderName) -Recurse -Force
 
             Write-Host "Successfully copied Custom data to installed OS"
             Exit 0

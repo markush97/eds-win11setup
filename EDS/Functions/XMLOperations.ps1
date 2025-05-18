@@ -1,18 +1,48 @@
-function Set-UnattendedDeviceName {
-    param (
-        [Parameter(Mandatory=$true)]
-        [xml]$xmlDoc,
-        [Parameter(Mandatory=$true)]
-        [string]$deviceName
-    )
+# Functions/XMLOperations.ps1
+function Set-DefaultUnattendedXML {
+    [OutputType([xml])]
+
+    [xml]$xmlDoc;
+    [string]$tempXmlPath
+
+    try {
+        $installDrive = Get-InstallationDrive
+        if (-not $installDrive) {
+            throw "Installation media not found. Please ensure the USB drive is properly connected."
+        }
+
+        # Create TEMP directory if it doesn't exist
+        $tempDir = Join-Path $PSScriptRoot "..\TEMP"
+        $tempXmlPath = Join-Path $tempDir "unattended.xml"
+        $script:unattendPath = $tempXmlPath
+        if (-not (Test-Path $tempDir)) {
+            New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
+        }
+        $sourceXmlPath = Join-Path $installDrive "$script:EDSFolderName\unattended.xml"
+
+        if (Test-Path $sourceXmlPath) {
+            Write-Host "Existing unattended.xml found, modifying it..."
+            $xmlDoc = [xml](Get-Content -Path $sourceXmlPath)
+        } else {
+            Write-Host "No existing unattended.xml found, creating new one..."
+            $xmlDoc = [xml](New-Object System.Xml.XmlDocument)
+        }
+
+
+    }
+    catch {
+        [System.Windows.Forms.MessageBox]::Show(
+            "Error updating unattended.xml: $($_.Exception.Message)",
+            "Error",
+            [System.Windows.Forms.MessageBoxButtons]::OK,
+            [System.Windows.Forms.MessageBoxIcon]::Error
+        )
+        throw "Could not load unattended XML."
+    }
 
     # Create basic unattend structure if it doesn't exist
     if (-not $xmlDoc.DocumentElement) {
         $xmlDoc.AppendChild($xmlDoc.CreateElement("unattend"))
-    }
-
-    if (-not $xmlDoc.unattend.xmlns) {
-        $xmlDoc.DocumentElement.SetAttribute("xmlns", "urn:schemas-microsoft-com:unattend")
     }
 
     # Create settings pass if it doesn't exist
@@ -35,14 +65,6 @@ function Set-UnattendedDeviceName {
         $settings.AppendChild($component)
     }
 
-    # Create or update ComputerName element
-    $computerName = $component.SelectSingleNode("ComputerName")
-    if (-not $computerName) {
-        $computerName = $xmlDoc.CreateElement("ComputerName")
-        $component.AppendChild($computerName)
-    }
-    $computerName.InnerText = $deviceName
-
     # Add RunSynchronous commands component if it doesn't exist
     $runComponent = $settings.SelectSingleNode("component[@name='Microsoft-Windows-Deployment']")
     if (-not $runComponent) {
@@ -62,12 +84,12 @@ function Set-UnattendedDeviceName {
         $runComponent.AppendChild($runSync)
     }
 
-    # Add command to exctract Specialize.ps1
+    # Add command to extract Specialize.ps1
     $extractCommand = $xmlDoc.CreateElement("RunSynchronousCommand")
     $extractCommand.SetAttribute("wcm:action", "add")
 
     $path = $xmlDoc.CreateElement("Path")
-    $path.InnerText = "powershell.exe -WindowStyle Normal -NoProfile -Command `"`$xml = [xml]::new(); `$xml.Load('C:\Windows\Panther\unattend.xml'); `$sb = [scriptblock]::Create( `$xml.unattend.CopyScript ); Invoke-Command -ScriptBlock `$sb -ArgumentList $script:EDSFolderName;`""
+    $path.InnerText = "powershell.exe -WindowStyle Normal -NoProfile -Command `"`$xml = [xml]::new(); `$xml.Load('C:\Windows\Panther\unattend.xml'); `$sb = [scriptblock]::Create( `$xml.unattend.EDS.CopyScript ); Invoke-Command -ScriptBlock `$sb -ArgumentList $script:EDSFolderName;`""
 
     $description = $xmlDoc.CreateElement("Description")
     $description.InnerText = "Execute CopySpecialize Script embedded inside unattend.xml"
@@ -100,55 +122,92 @@ function Set-UnattendedDeviceName {
 
     $runSync.AppendChild($runCommand)
 
-    # Add CopyScript section
-    $copyScript = $xmlDoc.CreateElement("CopyScript","https://eds.cwi.at")
+    # Create EDS element if it doesn't exist
+    $eds = $xmlDoc.unattend.SelectSingleNode("EDS")
+    if (-not $eds) {
+        $eds = $xmlDoc.CreateElement("EDS", "https://eds.cwi.at")
+        $xmlDoc.unattend.AppendChild($eds)
+    }
+
+    # Add CopyScript section inside EDS
+    $copyScript = $xmlDoc.CreateElement("CopyScript",$eds.NamespaceURI)
     $copyScript.InnerText = Get-Content -Path "$script:WinPeDrive\$script:EDSFolderName\Functions\CopySpecialize.ps1" -Raw
-    $xmlDoc.unattend.AppendChild($copyScript)
+    $eds.AppendChild($copyScript)
+
+    $xmlDoc.Save($tempXmlPath)
+    [xml]$script:unattendXml = Get-Content -Path $tempXmlPath -Raw
 }
 
-function Update-UnattendedXML {
-    param(
+function Set-UnattendedDeviceName {
+    param (
+        [Parameter(Mandatory=$true)]
+        [xml]$xmlDoc,
         [Parameter(Mandatory=$true)]
         [string]$deviceName
     )
 
-    try {
-        $installDrive = Get-InstallationDrive
-        if (-not $installDrive) {
-            throw "Installation media not found. Please ensure the USB drive is properly connected."
-        }
-
-        # Create TEMP directory if it doesn't exist
-        $tempDir = Join-Path $PSScriptRoot "..\TEMP"
-        if (-not (Test-Path $tempDir)) {
-            New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
-        }
-
-        $sourceXmlPath = Join-Path $installDrive "$script:EDSFolderName\unattended.xml"
-        $tempXmlPath = Join-Path $tempDir "unattended.xml"
-
-        if (Test-Path $sourceXmlPath) {
-            $xmlContent = [xml](Get-Content -Path $sourceXmlPath)
-        } else {
-            $xmlContent = [xml](New-Object System.Xml.XmlDocument)
-        }
-
-        # Create or update the XML structure
-        Set-UnattendedDeviceName -xmlDoc $xmlContent -deviceName $deviceName
-
-        # Save the updated XML
-        $xmlContent.Save($tempXmlPath)
-
-        Write-Host "Successfully updated computer name in temporary unattended.xml"
-        return $true
+    # Get the component from the XML document
+    $component = $xmlDoc.SelectSingleNode("//settings[@pass='specialize']/component[@name='Microsoft-Windows-Shell-Setup']")
+    if (-not $component) {
+        Write-Warning "Required component not found in XML"
+        return $false
     }
-    catch {
-        [System.Windows.Forms.MessageBox]::Show(
-            "Error updating unattended.xml: $($_.Exception.Message)",
-            "Error",
-            [System.Windows.Forms.MessageBoxButtons]::OK,
-            [System.Windows.Forms.MessageBoxIcon]::Error
-        )
+
+    # Create or update ComputerName element
+    $computerName = $component.SelectSingleNode("ComputerName")
+    if (-not $computerName) {
+        $computerName = $xmlDoc.CreateElement("ComputerName")
+        $component.AppendChild($computerName)
+    }
+    $computerName.InnerText = $deviceName
+
+    $xmlDoc.save($script:unattendPath)
+    return $true
+}
+
+
+function Set-UnattendedUserInput {
+    param (
+        [Parameter(Mandatory=$true)]
+        [xml]$xmlDoc,
+        [Parameter(Mandatory=$true)]
+        [Hashtable]$UserInput
+    )
+
+    Write-Host "Saving userInput..."
+
+    $nsMgr = New-Object System.Xml.XmlNamespaceManager($xmlDoc.NameTable)
+    $nsMgr.AddNamespace("u", "urn:schemas-microsoft-com:unattend")
+    $nsMgr.AddNamespace("e", "https://eds.cwi.at")
+
+    # Query the <EDS> node using XPath with the correct namespace
+    $eds = $xmlDoc.SelectSingleNode("//e:EDS", $nsMgr)
+
+    # Add or update settings under EDS
+    $userInputBlock = $eds.SelectSingleNode("UserInput")
+    if (-not $userInputBlock) {
+        $userInputBlock = $xmlDoc.CreateElement("UserInput", $eds.NamespaceURI)
+        $eds.AppendChild($userInputBlock)
+    }
+
+    # Iterate through the UserInput hashtable and create elements
+    foreach ($key in $UserInput.Keys) {
+        $value = $UserInput[$key]
+
+        # Check if the element already exists
+        $element = $userInputBlock.SelectSingleNode($key)
+        if (-not $element) {
+            $element = $xmlDoc.CreateElement($key, $eds.NamespaceURI)
+            $userInputBlock.AppendChild($element)
+        }
+        $element.InnerText = $value
+    }
+
+    try {
+        $xmlDoc.save($script:unattendPath)
+        $xmlDoc.save("$script:unattendPath/../test.xml")
+    } catch {
+        Write-Warning "Failed to save XML: $_"
         return $false
     }
 }
