@@ -8,10 +8,16 @@ The aim of this repository to create easy to maintain and adopt Windows-Installe
 
 To be able to use these scripts with a default Windows USB-Installer, you have to follow these instructions:
 
-    * Download the official ISO from Microsoft
-    * Burn it to a USB-Drive with a tool like [Rufus](https://rufus.ie/de/).
+    * Download a Windows 10 or Windows 11 .iso file from Microsoft, such as Win11_24H2_English_x64.iso.
+    * Mount that .iso image in File Explorer. This tutorial assumes that the .iso image is mounted to the D:\ drive.
+    * Plug in a USB flash drive with a capacity of at least 8 GiB. Using diskpart.exe or diskmgmt.msc, wipe that drive, create a single partition and format it with the FAT32 file system. This tutorial assumes that the flash drive is assigned the E:\ drive letter.
+    * Launch a PowerShell session with administrative privileges: 
+        * Copy the contents of the .iso image to the flash drive, but omit the large install.wim file:
+            > Copy-Item -Path 'D:\*' -Destination 'E:\' -Recurse -Force -Exclude 'install.wim';
+        * Copy the large install.wim file to the flash drive in chunks of 2 GiB: 
+            > Dism.exe /Split-Image /ImageFile:"D:\sources\install.wim" /SWMFile:"E:\sources\install.swm" /FileSize:2048;
     * Modify your boot.wim (and optionally install.wim) like instructed later in this document.
-    * Copy the modified .wim into the sources folder of the USB-Drive by simply dragging them there
+    * Unmount the .iso image.
     * Copy the "EDS" folder of this repository to the root of the USB-Stick
     * Boot the USB-Stick
 
