@@ -144,6 +144,4 @@ Boths modifications above do nothing but executing Entrypoint.ps1. This file has
 
 For this reason the [Entrypoint.ps1](/bootwim-modifications/Entrypoint.ps1) in this repository only has the task to search every attached drive for a folder called "EDS" (or whatever you define it to be named like) that has an File named "eds.cfg" inside it. This file can be completly empty aswell. Its main reason is to tell the Installer which Medium to use in case there are multiple USB-Sticks attached.
 
-Once that folder has been found, the script copies all of its content into the Root-Directory of the current installer (which is the mounted boot.wim). This provides the advantage of only having to modify the files inside the ISO/Installationmedium without using more complicated tools like DISM.
-
 At last the entrypoint.ps1 starts a "Start.ps1" located at the root of the found "EDS"-Folder. Every complicated logic should be handled inside this script.

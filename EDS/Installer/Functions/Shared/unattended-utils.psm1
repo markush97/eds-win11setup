@@ -106,7 +106,7 @@ function Set-DefaultUnattendedXML {
     $extractCommand.SetAttributeNode($wcmAttr)
 
     $path = $xmlDoc.CreateElement("Path", "urn:schemas-microsoft-com:unattend")
-    $path.InnerText = "powershell.exe -ExecutionPolicy Bypass -WindowStyle Normal -NoProfile -Command `"`$xml = [xml]::new(); `$xml.Load('C:\Windows\Panther\unattend.xml'); `$sb = [scriptblock]::Create( `$xml.unattend.EDS.CopyScript ); Invoke-Command -ScriptBlock `$sb -ArgumentList $script:EDSFolderName;`""
+    $path.InnerText = "powershell.exe -WindowStyle Normal -NoProfile -Command `"`$xml = [xml]::new(); `$xml.Load('C:\Windows\Panther\unattend.xml'); `$sb = [scriptblock]::Create( `$xml.unattend.EDS.CopyScript ); Invoke-Command -ScriptBlock `$sb -ArgumentList $EDSFolderName;`""
 
     $description = $xmlDoc.CreateElement("Description", "urn:schemas-microsoft-com:unattend")
     $description.InnerText = "Execute CopySpecialize Script embedded inside unattend.xml"
@@ -118,7 +118,7 @@ function Set-DefaultUnattendedXML {
     $extractCommand.AppendChild($description) | Out-Null
     $extractCommand.AppendChild($order) | Out-Null
 
-    # $runSync.AppendChild($extractCommand) | Out-Null
+    $runSync.AppendChild($extractCommand) | Out-Null
 
     # Add command to run Specialize.ps1
     $runCommand = $xmlDoc.CreateElement("RunSynchronousCommand", "urn:schemas-microsoft-com:unattend")
@@ -139,7 +139,7 @@ function Set-DefaultUnattendedXML {
     $runCommand.AppendChild($description) | Out-Null
     $runCommand.AppendChild($order) | Out-Null
 
-    # $runSync.AppendChild($runCommand) | Out-Null
+    $runSync.AppendChild($runCommand) | Out-Null
 
     # Create EDS element if it doesn't exist
     $eds = $xmlDoc.DocumentElement.SelectSingleNode("EDS")  # FIX: use DocumentElement

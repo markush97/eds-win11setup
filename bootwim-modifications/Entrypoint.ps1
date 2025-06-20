@@ -20,16 +20,8 @@ $installDrive = Get-InstallationDrive
 if ($null -ne $installDrive) {
     Write-Host "Copying custom-data into current system..."
     try {
-        # Create destination if it doesn't exist
-        if (-not (Test-Path "X:\$EDSFolderName")) {
-            New-Item -Path "X:\$EDSFolderName" -ItemType Directory -Force | Out-Null
-        }
-
-        # Copy files
-        Copy-Item -Path (Join-Path $installDrive "$EDSFolderName\*") -Destination "X:\$EDSFolderName" -Recurse -Force
-
         # Start the GUI
-        Start-Process -FilePath "powershell.exe" -ArgumentList "-ExecutionPolicy Bypass -File `"X:\$EDSFolderName\Start.ps1`"" -WorkingDirectory "X:\$EDSFolderName" -NoNewWindow -Wait
+        Start-Process -FilePath "powershell.exe" -ArgumentList "-ExecutionPolicy Bypass -File `"$installDrive\$EDSFolderName\Start.ps1`"" -WorkingDirectory "$installDrive\$EDSFolderName" -NoNewWindow -Wait
 
     }
     catch {
