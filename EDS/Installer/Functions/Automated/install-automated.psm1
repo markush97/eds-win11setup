@@ -148,11 +148,16 @@ function Install-Automated {
         Write-Host "Instructions received from server. Proceeding with automated configuration."
         Set-Infotext "Instructions received from server. Proceeding with automated configuration."
         Start-Sleep -Seconds 2
+
+        $automatedForm.Close()
+
         Set-JobStatus -jobId $jobId -status "installing" -deviceToken $deviceToken -uri $EDS_Server
 
         # Load unattend.xml from disk and update device name
         $unattendPath = Join-Path $WinPeDrive 'Temp/unattended.xml'
         [xml]$unattendXml = Get-Content -Path $unattendPath
+
+        Write-Host "Updating device name in unattend.xml to $($jobContext.deviceName)"
         Set-UnattendedDeviceName -deviceName $jobContext.deviceName -xmlDoc $unattendXml
         # Convert jobContext to hashtable for Set-UnattendedUserInput
         $jobContextHash = @{
@@ -160,10 +165,9 @@ function Install-Automated {
             jobId = $jobId
         }
         $jobContext.PSObject.Properties | ForEach-Object { $jobContextHash[$_.Name] = $_.Value }
+        Write-Host "Updating user input in unattend.xml"
         Set-UnattendedUserInput -xmlDoc $unattendXml -UserInput $jobContextHash
-        
-        $automatedForm.Close()
-
+    
         Write-Host "Starting installation process for device"
         if ($DryRun -ne $true) {
             $installDrive = Get-InstallationDrive -EDSFolderName $EDSFolderName

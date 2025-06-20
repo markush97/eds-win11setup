@@ -16,6 +16,7 @@ function Set-DefaultUnattendedXML {
         # Create TEMP directory if it doesn't exist
         $tempDir = Join-Path $WinPeDrive "Temp" 
         $tempXmlPath = Join-Path $tempDir "unattended.xml"
+        $script:unattendPath = $tempXmlPath
         $unattendPath = $tempXmlPath
         if (-not (Test-Path $tempDir)) {
             New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
@@ -117,7 +118,7 @@ function Set-DefaultUnattendedXML {
     $extractCommand.AppendChild($description) | Out-Null
     $extractCommand.AppendChild($order) | Out-Null
 
-    $runSync.AppendChild($extractCommand) | Out-Null
+    # $runSync.AppendChild($extractCommand) | Out-Null
 
     # Add command to run Specialize.ps1
     $runCommand = $xmlDoc.CreateElement("RunSynchronousCommand", "urn:schemas-microsoft-com:unattend")
@@ -138,7 +139,7 @@ function Set-DefaultUnattendedXML {
     $runCommand.AppendChild($description) | Out-Null
     $runCommand.AppendChild($order) | Out-Null
 
-    $runSync.AppendChild($runCommand) | Out-Null
+    # $runSync.AppendChild($runCommand) | Out-Null
 
     # Create EDS element if it doesn't exist
     $eds = $xmlDoc.DocumentElement.SelectSingleNode("EDS")  # FIX: use DocumentElement
@@ -158,7 +159,7 @@ function Set-DefaultUnattendedXML {
     $xmlWriterSettings.Encoding = [System.Text.Encoding]::UTF8
     $xmlWriterSettings.OmitXmlDeclaration = $false
     $xmlWriter = [System.Xml.XmlWriter]::Create($tempXmlPath, $xmlWriterSettings)
-    $xmlDoc.Save($xmlWriter)
+    $xmlDoc.save($xmlWriter)
     $xmlWriter.Close()
     [xml]$script:unattendXml = Get-Content -Path $tempXmlPath -Raw
 }
