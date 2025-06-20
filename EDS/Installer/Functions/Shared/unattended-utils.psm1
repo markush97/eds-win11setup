@@ -16,11 +16,12 @@ function Set-DefaultUnattendedXML {
         # Create TEMP directory if it doesn't exist
         $tempDir = Join-Path $WinPeDrive "Temp" 
         $tempXmlPath = Join-Path $tempDir "unattended.xml"
-        $script:unattendPath = $tempXmlPath
+        $unattendPath = $tempXmlPath
         if (-not (Test-Path $tempDir)) {
             New-Item -ItemType Directory -Path $tempDir -Force | Out-Null
         }
         $sourceXmlPath = Join-Path $installDrive "$EDSFolderName\Installer\unattended.xml"
+        Write-Host "Looking for unattended.xml in $sourceXmlPath"
 
         if (Test-Path $sourceXmlPath) {
             Write-Host "Existing unattended.xml found, modifying it..."
@@ -171,7 +172,7 @@ function Set-UnattendedDeviceName {
     )
 
     $nsMgr = New-Object System.Xml.XmlNamespaceManager($xmlDoc.NameTable)
-    $nsMgr.AddNamespace("u", "urn:schemas-microsoft-com:unattend")
+    $nsMgr.AddNamespace("u", "urn:schemas-microsoft-com:unattend") | Out-Null
 
     # Get the component from the XML document
     $component = $xmlDoc.SelectSingleNode("//u:settings[@pass='specialize']/u:component[@name='Microsoft-Windows-Shell-Setup']", $nsMgr)
@@ -184,7 +185,7 @@ function Set-UnattendedDeviceName {
     $computerName = $component.SelectSingleNode("u:ComputerName", $nsMgr)
     if (-not $computerName) {
         $computerName = $xmlDoc.CreateElement("ComputerName", "urn:schemas-microsoft-com:unattend")
-        [void]$component.AppendChild($computerName)
+        $component.AppendChild($computerName) | Out-Null
     }
     $computerName.InnerText = $deviceName
 
@@ -214,7 +215,7 @@ function Set-UnattendedUserInput {
     $userInputBlock = $eds.SelectSingleNode("UserInput")
     if (-not $userInputBlock) {
         $userInputBlock = $xmlDoc.CreateElement("UserInput", $eds.NamespaceURI)
-        [void]$eds.AppendChild($userInputBlock)
+        $eds.AppendChild($userInputBlock)  | Out-Null
     }
 
     # Iterate through the UserInput hashtable and create elements
@@ -225,7 +226,7 @@ function Set-UnattendedUserInput {
         $element = $userInputBlock.SelectSingleNode($key)
         if (-not $element) {
             $element = $xmlDoc.CreateElement($key, $eds.NamespaceURI)
-            [void]$userInputBlock.AppendChild($element)
+            $userInputBlock.AppendChild($element)  | Out-Null
         }
         $element.InnerText = $value
     }

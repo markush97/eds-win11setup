@@ -50,8 +50,6 @@ $NetworkInstallMode = $EDSConfig['NetworkInstallMode']
 # Import Loading Forms
 . $PSScriptRoot\GUI\LoadingScreen.ps1
 
-Write-Host "Creating default unattend.xml Template..."
-Set-DefaultUnattendedXML -EDSFolderName $script:EDSFolderName -WinPeDrive $WinPeDrive
 
 # Show loading screen
 Write-Host "Starting WinPe Initialization Process..."
@@ -73,6 +71,9 @@ Start-Sleep -Milliseconds 500
 # Close loading form
 $loadingForm.Close()
 $loadingForm.Dispose()
+
+Write-Host "Updating unattend.xml Template with default values..."
+Set-DefaultUnattendedXML -EDSFolderName $script:EDSFolderName -WinPeDrive $WinPeDrive
 
 if ($NetworkInstallMode -eq 'auto') {
     Write-Host "Automated network install from server $EDS_Server selected."

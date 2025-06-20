@@ -8,6 +8,7 @@ function Get-InstallationDrive {
     foreach ($drive in $drives) {
         $path = Join-Path $drive.Root "$EDSFolderName\eds.cfg"
         if (Test-Path $path) {
+            Write-Host "Found installation media on drive: $($drive.Name)"
             return $drive.Root
         }
     }

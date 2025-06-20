@@ -8,6 +8,6 @@ $drives = Get-PSDrive -PSProvider FileSystem;
 foreach ($drive in $drives) {
     $path = Join-Path $drive.Root "$EDSFolderName\eds.cfg";
     if (Test-Path $path) {
-        Copy-Item -Path (Join-Path $drive.Root "$EDSFolderName\*") -Destination (Join-Path "C:" $EDSFolderName) -Recurse -Force;
+        Copy-Item -Path (Join-Path $drive.Root "$EDSFolderName\Setup\*") -Destination (Join-Path "C:" $EDSFolderName) -Recurse -Force;
     }
 }

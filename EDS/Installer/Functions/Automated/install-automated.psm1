@@ -23,15 +23,30 @@ function Install-Automated {
         return
     }   
  
- # Check if the EDS server URL is reachable
-    try {
-        $response = Invoke-WebRequest -Uri $EDS_Server -UseBasicParsing -TimeoutSec 5
-        if ($response.StatusCode -lt 200 -or $response.StatusCode -ge 400) {
-            Write-Host "EDS server $EDS_Server is not reachable (HTTP $($response.StatusCode)). Exiting installer."
-            return
+ # Retry logic for EDS server connectivity
+    $maxRetries = 6
+    $retryDelay = 10 # seconds
+    $attempt = 0
+    $connected = $false
+    while ($attempt -lt $maxRetries -and -not $connected) {
+        try {
+            $response = Invoke-WebRequest -Uri $EDS_Server -UseBasicParsing -TimeoutSec 5
+            if ($response.StatusCode -ge 200 -and $response.StatusCode -lt 400) {
+                $connected = $true
+                break
+            } else {
+                Write-Host "EDS server $EDS_Server is not reachable (HTTP $($response.StatusCode)). Retrying in $retryDelay seconds..."
+            }
+        } catch {
+            Write-Host "EDS server $EDS_Server is not reachable. Retrying in $retryDelay seconds..."
         }
-    } catch {
-        Write-Host "EDS server $EDS_Server is not reachable. Exiting installer."
+        $attempt++
+        if ($attempt -lt $maxRetries) {
+            Start-Sleep -Seconds $retryDelay
+        }
+    }
+    if (-not $connected) {
+        Write-Host "EDS server $EDS_Server is not reachable after $($maxRetries * $retryDelay) seconds. Exiting installer."
         return
     }
 
@@ -140,9 +155,25 @@ function Install-Automated {
         [xml]$unattendXml = Get-Content -Path $unattendPath
         Set-UnattendedDeviceName -deviceName $jobContext.deviceName -xmlDoc $unattendXml
         # Convert jobContext to hashtable for Set-UnattendedUserInput
-        $jobContextHash = @{}
+        $jobContextHash = @{
+            deviceToken = $deviceToken
+            jobId = $jobId
+        }
         $jobContext.PSObject.Properties | ForEach-Object { $jobContextHash[$_.Name] = $_.Value }
         Set-UnattendedUserInput -xmlDoc $unattendXml -UserInput $jobContextHash
+        
+        $automatedForm.Close()
+
+        Write-Host "Starting installation process for device"
+        if ($DryRun -ne $true) {
+            $installDrive = Get-InstallationDrive -EDSFolderName $EDSFolderName
+
+            Write-Host "Starting installation with unattended.xml $unattendPath"
+            Start-Process -FilePath "$WinPeDrive\setup.exe" -ArgumentList "/unattend:$unattendPath" -NoNewWindow
+        } else {
+            Write-Host "Skipping actual setup because of Dry-Run"
+        }
+
     } else {
         Write-Host "Form closed without action."
     }
