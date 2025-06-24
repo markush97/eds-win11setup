@@ -108,7 +108,7 @@ C:\Program Files (x86)\Windows Kits\10\Assessment and Deployment Kit\Windows Pre
 
 ## Windows Installer Modification
 
-While not considered best practice, we group all EDS-custom information in a "EDS" folder at the boot.wim root for better traceability and reproducibility.
+While not needed, we group all EDS-custom information in a "EDS" folder at the boot.wim root for better traceability and reproducibility.
 
 ### Entry Points
 

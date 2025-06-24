@@ -57,8 +57,8 @@ function Install-Automated {
     $registerInfo = @{
         deviceName = $deviceName
         deviceType = Get-DeviceType
-        # deviceSerial = Get-SerialNumber
-        deviceSerial = "SN-$randomNumber"  # Placeholder for serial number
+        deviceSerial = Get-SerialNumber
+        # deviceSerial = "SN-$randomNumber"  # Placeholder for serial number
     }
 
     $guiPath = "$PSScriptRoot\..\..\GUI"
@@ -163,6 +163,8 @@ function Install-Automated {
         $jobContextHash = @{
             deviceToken = $deviceToken
             jobId = $jobId
+            apiUrl = $EDS_Server
+            edsFolderName = $EDSFolderName
         }
         $jobContext.PSObject.Properties | ForEach-Object { $jobContextHash[$_.Name] = $_.Value }
         Write-Host "Updating user input in unattend.xml"

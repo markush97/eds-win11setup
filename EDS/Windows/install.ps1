@@ -322,7 +322,7 @@ function Register-Device {
     try {
 	    Write-Host "Registering device with $uri/jobs/register"
         $response = Invoke-RestMethod -Uri "$uri/jobs/register" -Method POST -Headers $headers -Body $registerInfo
-	New-Item "C:\ProgramData\CWI" -Force -ItemType Directory | Out-Null
+	    New-Item "C:\ProgramData\CWI" -Force -ItemType Directory | Out-Null
 
         $deviceToken = $response.deviceToken
 

@@ -95,11 +95,34 @@ function Set-DefaultUnattendedXML {
         $runComponent.AppendChild($runSync) | Out-Null
     }
 
-
+    $existingOrders = @()
+    foreach ($cmd in $runSync.SelectNodes("u:RunSynchronousCommand", $nsMgr)) {
+        $orderNode = $cmd.SelectSingleNode("u:Order", $nsMgr)
+        if ($orderNode -and $orderNode.InnerText -match '^\\d+$') {
+            $existingOrders += [int]$orderNode.InnerText
+        }
+    }
+    if ($existingOrders.Count -eq 0) { $maxOrder = 0 } else { $maxOrder = ($existingOrders | Measure-Object -Maximum).Maximum }
 
     $wcmNamespaceUri = "http://schemas.microsoft.com/WMIConfig/2002/State"
     $wcmAttr = $xmlDoc.CreateAttribute("wcm", "action", $wcmNamespaceUri)
     $wcmAttr.Value = "add"
+
+    # Find the next available <Order> value for RunSynchronousCommand
+    $existingOrders = @()
+    $runSyncCmds = $runSync.SelectNodes("u:RunSynchronousCommand/u:Order", $nsMgr)
+    if ($runSyncCmds) {
+        foreach ($orderNode in $runSyncCmds) {
+            [int]$val = 0
+            if ([int]::TryParse($orderNode.InnerText, [ref]$val)) {
+                $existingOrders += $val
+            }
+        }
+    }
+    if ($existingOrders.Count -eq 0) { $existingOrders = @(0) }
+    $nextOrder = (($existingOrders | Measure-Object -Maximum).Maximum) + 1
+
+    Write-Host "Next available order for RunSynchronousCommand is $nextOrder"
 
     # Add command to extract Specialize.ps1
     $extractCommand = $xmlDoc.CreateElement("RunSynchronousCommand", "urn:schemas-microsoft-com:unattend")
@@ -112,7 +135,7 @@ function Set-DefaultUnattendedXML {
     $description.InnerText = "Execute CopySpecialize Script embedded inside unattend.xml"
 
     $order = $xmlDoc.CreateElement("Order", "urn:schemas-microsoft-com:unattend")
-    $order.InnerText = "1"
+    $order.InnerText = "$nextOrder"
 
     $extractCommand.AppendChild($path) | Out-Null
     $extractCommand.AppendChild($description) | Out-Null
@@ -127,13 +150,13 @@ function Set-DefaultUnattendedXML {
     $runCommand.SetAttributeNode($wcmAttr2)
 
     $path = $xmlDoc.CreateElement("Path", "urn:schemas-microsoft-com:unattend")
-    $path.InnerText = "powershell.exe -ExecutionPolicy Bypass -File C:\$EDSFolderName\Setup\Specialize.ps1"
+    $path.InnerText = "powershell.exe -ExecutionPolicy Bypass -File C:\Windows\Setup\$EDSFolderName\Specialize.ps1"
 
     $description = $xmlDoc.CreateElement("Description", "urn:schemas-microsoft-com:unattend")
     $description.InnerText = "Execute Specialize-Script"
 
     $order = $xmlDoc.CreateElement("Order", "urn:schemas-microsoft-com:unattend")
-    $order.InnerText = "2"
+    $order.InnerText = "$(($nextOrder + 1))"
 
     $runCommand.AppendChild($path) | Out-Null
     $runCommand.AppendChild($description) | Out-Null
