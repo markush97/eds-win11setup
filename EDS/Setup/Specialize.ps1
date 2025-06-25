@@ -51,30 +51,51 @@ $params = Get-InstallerParams
 $apiUrl = $params.apiUrl[0]
 $jobId = $params.jobId[0]
 $deviceToken = $params.deviceToken[0]
-$edsFolderName = $params.edsFolder[0]
+$edsFolderName = $params.edsFolderName[0]
 
 $headers = @{
     "Content-Type"    = "application/json"
     "X-Device-Token"  = $deviceToken
 }
 
-$zipPath = Join-Path $edsFolderName "content.zip"
-$extractPath = Join-Path $edsFolderName "content"
+$basePath = Join-Path "C:\Windows\Setup" $edsFolderName
+$zipPath = Join-Path $basePath "content.zip"
+$extractPath = Join-Path $basePath "content"
 
-New-Item -Path $edsFolderName -ItemType Directory -Force | Out-Null
+New-Item -Path $basePath -ItemType Directory -Force | Out-Null
 
-Invoke-RestMethod -Uri "$apiUrl/jobs/$jobId/content" -Method Get -Headers $headers -TimeoutSec 5 -OutFile $zipPath
+$downloadSuccess = $false
+try {
+    Invoke-RestMethod -Uri "$apiUrl/jobs/$jobId/content" -Method Get -Headers $headers -TimeoutSec 5 -OutFile $zipPath
+    $downloadSuccess = $true
+} catch {
+    Write-Host "Failed to download job content: $($_.Exception.Message)"
+    if ($_.Exception.Response -and $_.Exception.Response.StatusCode) {
+        Write-Host "HTTP Status: $($_.Exception.Response.StatusCode)"
+    }
+}
+
+if (-not $downloadSuccess -or -not (Test-Path $zipPath)) {
+    Write-Host "Zip file not found or download failed: $zipPath"
+    exit 1
+}
 
 # Extract the zip file
-if (Test-Path $zipPath) {
-    if (Test-Path $extractPath) {
+if (Test-Path $extractPath) {
+    try {
         Remove-Item $extractPath -Recurse -Force
+    } catch {
+        Write-Host "Failed to remove existing extract path: $extractPath. $_"
+        exit 1
     }
+}
+try {
     Add-Type -AssemblyName System.IO.Compression.FileSystem
     [System.IO.Compression.ZipFile]::ExtractToDirectory($zipPath, $extractPath)
     Write-Host "Content extracted to $extractPath"
-} else {
-    Write-Host "Zip file not found: $zipPath"
+} catch {
+    Write-Host "Failed to extract zip file: $($_.Exception.Message)"
+    exit 1
 }
 
 $entryPoint = Join-Path $extractPath "main.ps1"

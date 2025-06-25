@@ -8,7 +8,8 @@ function Install-Automated {
         [Parameter(Mandatory=$false)]
         [string]$WinPeDrive = "X:",
         [Parameter(Mandatory=$false)]
-        [string]$EDSFolderName = "CWI"
+        [string]$EDSFolderName = "CWI",
+        [switch]$Debugging = $false
     )
 
     # Check if the EDS server URL is provided
@@ -54,11 +55,17 @@ function Install-Automated {
     $randomNumber = Get-Random -Minimum 100000 -Maximum 999999
     $deviceName = "EDS-Auto-$randomNumber"
 
+    if ($Debugging) {
+        Write-Host "Debugging mode enabled. Using random device name: $deviceName"
+        $serialNumber = "SN-$randomNumber"  # Placeholder for serial number
+    } else {
+        $serialNumber = Get-SerialNumber
+    }
+
     $registerInfo = @{
         deviceName = $deviceName
         deviceType = Get-DeviceType
-        deviceSerial = Get-SerialNumber
-        # deviceSerial = "SN-$randomNumber"  # Placeholder for serial number
+        deviceSerial = "GM0XNWDG"
     }
 
     $guiPath = "$PSScriptRoot\..\..\GUI"
@@ -75,17 +82,17 @@ function Install-Automated {
             Set-Infotext "Device registration failed. Exiting..."
             [System.Windows.Forms.Application]::DoEvents()
             Start-Sleep -Seconds 2
-            $form.Close()
+            $automatedForm.Close()
             Write-Host "Registration failed, exiting installer."
-            exit 1
+            return
         }
     } catch {
         Set-Infotext "Device registration failed. Exiting..."
         [System.Windows.Forms.Application]::DoEvents()
         Start-Sleep -Seconds 2
-        $form.Close()
+        $automatedForm.Close()
         Write-Host "Registration failed, exiting installer."
-        exit 1
+        return
     }
 
     Set-Infotext "Device registered successfully"
@@ -163,7 +170,7 @@ function Install-Automated {
         $jobContextHash = @{
             deviceToken = $deviceToken
             jobId = $jobId
-            apiUrl = $EDS_Server
+            apiUrl = "$EDS_Server/api"
             edsFolderName = $EDSFolderName
         }
         $jobContext.PSObject.Properties | ForEach-Object { $jobContextHash[$_.Name] = $_.Value }
@@ -175,6 +182,8 @@ function Install-Automated {
             $installDrive = Get-InstallationDrive -EDSFolderName $EDSFolderName
 
             Write-Host "Starting installation with unattended.xml $unattendPath"
+            New-Item -Path "$installDrive\Temp" -ItemType Directory -Force | Out-Null
+            Copy-Item -Path $unattendPath -Destination "$installDrive\Temp\unattended_save.xml" -Force
             Start-Process -FilePath "$WinPeDrive\setup.exe" -ArgumentList "/unattend:$unattendPath" -NoNewWindow
         } else {
             Write-Host "Skipping actual setup because of Dry-Run"

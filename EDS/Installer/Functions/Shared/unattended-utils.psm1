@@ -56,8 +56,10 @@ function Set-DefaultUnattendedXML {
     $nsMgr.AddNamespace("u", "urn:schemas-microsoft-com:unattend")
 
     # Use correct XPath with namespace
-    $settings = $xmlDoc.SelectSingleNode("//u:settings[@pass='specialize']", $nsMgr)
-    if (-not $settings) {
+    $settingsList = $xmlDoc.SelectNodes("//u:settings[@pass='specialize']", $nsMgr)
+    if ($settingsList.Count -gt 0) {
+        $settings = $settingsList[0]
+    } else {
         $settings = $xmlDoc.CreateElement("settings", "urn:schemas-microsoft-com:unattend")
         $settings.SetAttribute("pass", "specialize")
         $xmlDoc.DocumentElement.AppendChild($settings) | Out-Null  # FIX: use DocumentElement

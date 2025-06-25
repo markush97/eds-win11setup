@@ -2,7 +2,8 @@
 param (
     [switch]$DryRun = $false,
     [string]$WinPeDrive = "X:",
-    [string]$EDSFolderName = "CWI"
+    [string]$EDSFolderName = "CWI",
+    [switch]$Debugging = $false
 )
 
 $script:EDSFolderName = $EDSFolderName
@@ -80,7 +81,7 @@ if ($NetworkInstallMode -eq 'auto') {
     Write-Host "Starting automated installation..."
     
     try {
-        Install-Automated -EDS_Server $EDS_Server -DryRun:($DryRun) -WinPeDrive $WinPeDrive -EDSFolderName $EDSFolderName
+        Install-Automated -EDS_Server $EDS_Server -DryRun:($DryRun) -WinPeDrive $WinPeDrive -EDSFolderName $EDSFolderName -Debugging:($Debugging)
     } catch {
         Write-Host "ERROR: Exception during Install-Automated: $($_.Exception.Message)"
     }
